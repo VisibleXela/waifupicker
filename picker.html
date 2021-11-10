@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0">
+<title>Picker</title>
+<style>
+body {
+    background:#FFF;
+    color:#000;
+    font-family:verdana, sans-serif;
+    font-size:10pt;
+    margin:0;
+    padding:10px;
+}
+
+a:link, a:visited {
+    color:#008;
+    font-weight:bold;
+    text-decoration:none;
+}
+
+a:active, a:hover {
+    color:#ACF;
+}
+
+.info {
+    font-weight:bold;
+}
+
+button {
+    font-family:inherit;
+    cursor:pointer;
+    border:0;
+    border-radius:3px;
+    padding:0.3em 0.5em;
+    background:#CCC;
+    color:#000;
+}
+
+button:hover {
+    background:#DDD;
+}
+
+button.disabled {
+    background:#DDD;
+    color:#888;
+    cursor:not-allowed;
+}
+
+button.disabled:hover {
+    background:#DDD;
+}
+
+#container {
+    position:relative;
+    margin-left:-10px;
+    margin-right:-10px;
+    padding:10px;
+    overflow:hidden;
+}
+
+@media (min-width:1024px) {
+    /* Put the found favorites beside the picking div when the window is sufficiently large */
+    #picking {
+        float:left;
+        width:636px;
+    }
+
+    #secondary {
+        margin-left:646px;
+    }
+}
+
+@media (min-width:1300px) {
+    /* Once we get to the point where 636px is less than half of the width of the screen, make the picking div just take up half */
+    #picking {
+        width:50%;
+    }
+
+    #secondary {
+        margin-left:51%;
+    }
+}
+
+#pick {
+    background:#58F;
+    color:#FFF;
+    font-size:larger;
+    font-weight:bold;
+    width:6em;
+    border-radius:5px;
+    margin-right:10px;
+}
+
+#pick.disabled {
+    background:#ACF;
+}
+
+#pick:hover {
+    background:#ACF;
+}
+
+.item-list {
+    padding:0;
+    list-style-type:none;
+    line-height:100px;
+}
+
+.item-list li {
+    margin:0;
+    display:inline-block;
+    height:100px;
+    width:100px;
+    line-height:100px;
+    border:3px solid transparent;
+    text-align:center;
+    position:relative;
+    vertical-align:top;
+    overflow:hidden;
+    border-radius:100%;
+    background:#F7F7F7;
+    color:#000;
+}
+
+.item-list li img {
+    vertical-align:middle;
+    max-height:100%;
+    max-width:100%;
+}
+
+.item-list li span {
+    display:inline-block;
+    vertical-align:middle;
+    line-height:1.2;
+}
+
+@media (max-width:636px) {
+    .item-list {
+        line-height:75px;
+    }
+
+    .item-list li {
+        line-height:75px;
+        height:75px;
+        width:75px;
+    }
+}
+
+@media (max-width:423px) {
+    .item-list {
+        line-height:50px;
+    }
+
+    .item-list li {
+        line-height:50px;
+        height:50px;
+        width:50px;
+    }
+}
+
+#evaluating li {
+    cursor:pointer;
+}
+
+#favorites li {
+    cursor:move;
+}
+
+.item-list li:hover {
+    background:#CDF;
+}
+
+.item-list.sorting li:hover {
+    background:#F7F7F7;
+}
+
+#evaluating li.selected {
+    border:3px solid #7AC;
+}
+
+#evaluating, #buttons {
+    text-align:center;
+    margin:auto;
+}
+
+#evaluating li.notice {
+    width:auto;
+    height:auto;
+    max-width:260px;
+    margin:auto;
+    background:#F7F7F7;
+    border-radius:10px;
+    padding:30px 30px;
+    color:#000;
+    text-align:center;
+    line-height:1.4;
+    cursor:auto;
+    font-size:10pt;
+}
+
+#buttons {
+    margin-top:30px;
+    position:relative;
+    z-index:3;
+}
+</style>
+</head>
+<body>
+<h1>PokéWaifu Picker</h1>
+
+<p>Who is top tier and who is just trash?</p>
+
+<div id="container">
+
+<div id="picking">
+<ul id="evaluating" class="item-list">
+</ul>
+
+<p id="buttons"><button id="pick">Pick</button> <button id="pass">Pass</button> <button id="undo">Undo</button> <button id="redo">Redo</button></p>
+</div>
+
+<div id="secondary">
+<h2>Top tier</h2>
+
+<ol id="favorites" class="item-list">
+</ol>
+</div>
+</div>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="picker.js"></script>
+<script src="picker-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.7.0/Sortable.min.js"></script>
+<script>
+'use strict';
+
+var items = [
+    {id: 'zossie', name: 'Zossie', image: 'https://i.imgur.com/9Wv4i64.png'},
+    {id: 'anabel', name: 'Anabel', image: 'https://i.imgur.com/nP3L8nZ.png'},
+    {id: 'astrid', name: 'Astrid', image: 'https://i.imgur.com/pecx2SK.png'},
+    {id: 'iris', name: 'Iris', image: 'https://i.imgur.com/8vDSgUM.png'},
+	{id: 'rosa', name: 'Rosa', image: 'https://i.imgur.com/7YlpcBy.png'},
+	{id: 'roxie', name: 'Roxie', image: 'https://i.imgur.com/Fcg26pU.png'},
+	{id: 'bianca', name: 'Bianca', image: 'https://i.imgur.com/eghy5lW.png'},
+	{id: 'caitlin', name: 'Caitlin', image: 'https://i.imgur.com/95HpiG8.png'},
+	{id: 'elesa', name: 'Elesa', image: 'https://i.imgur.com/RU3cTiY.png'},
+	{id: 'fennel', name: 'fennel', image: 'https://i.imgur.com/sizVYbO.png'},
+	{id: 'hilda', name: 'Hilda', image: 'https://i.imgur.com/BpXlgSi.png'},
+	{id: 'juniper', name: 'Juniper', image: 'https://i.imgur.com/ZGOcK77.png'},
+	{id: 'lenora', name: 'Lenora', image: 'https://i.imgur.com/uzfZrhN.png'},
+	{id: 'shauntal', name: 'Shauntal', image: 'https://i.imgur.com/1dYbomJ.png'},
+	{id: 'skyla', name: 'Skyla', image: 'https://i.imgur.com/ydMl5Ij.png'},
+	{id: 'brigette', name: 'Brigette', image: 'https://i.imgur.com/yRm9ogl.png'},
+	{id: 'chrysa', name: 'Chrysa', image: 'https://i.imgur.com/1tc9Cua.png'},
+	{id: 'kris', name: 'Kris', image: 'https://i.imgur.com/hVVO0VQ.png'},
+	{id: 'candice', name: 'Candice', image: 'https://i.imgur.com/o0WfJM4.png'},
+	{id: 'cheryl', name: 'Cheryl', image: 'https://i.imgur.com/2ZTED2M.png'},
+	{id: 'cynthia', name: 'Cynthia', image: 'https://i.imgur.com/vL1lp0P.png'},
+	{id: 'dawn', name: 'Dawn', image: 'https://i.imgur.com/44gtLwm.png'},
+	{id: 'fantina', name: 'Fantina', image: 'https://i.imgur.com/rqaOgWC.png'},
+	{id: 'gardenia', name: 'Gardenia', image: 'https://i.imgur.com/Tevw9dA.png'},
+	{id: 'jupiter', name: 'Jupiter', image: 'https://i.imgur.com/2u2HPSg.png'},
+	{id: 'marley', name: 'Marley', image: 'https://i.imgur.com/SW1YmOG.png'},
+	{id: 'mars', name: 'Mars', image: 'https://i.imgur.com/TzFQzqt.png'},
+	{id: 'maylene', name: 'Maylene', image: 'https://i.imgur.com/KEdGSGE.png'},
+	{id: 'lucy', name: 'Lucy', image: 'https://i.imgur.com/KbPaPZK.png'},
+	{id: 'agatha', name: 'Agatha', image: 'https://i.imgur.com/YN3Se2N.png'},
+	{id: 'erika', name: 'Erika', image: 'https://i.imgur.com/XcvxuUQ.png'},
+	{id: 'leaf', name: 'Leaf', image: 'https://i.imgur.com/PBn7jgj.png'},
+	{id: 'lorelei', name: 'Lorelei', image: 'https://i.imgur.com/heSkX4o.png'},
+	{id: 'misty', name: 'Misty', image: 'https://i.imgur.com/AkwX2cf.png'},
+	{id: 'sabrina', name: 'Sabrina', image: 'https://i.imgur.com/BvR4Zyn.png'},
+	{id: 'candela', name: 'Candela', image: 'https://i.imgur.com/dmW3mDr.png'},
+	{id: 'blanche', name: 'Blanche', image: 'https://i.imgur.com/Nxe1Shj.png'},
+	{id: 'ariana', name: 'Ariana', image: 'https://i.imgur.com/amoYfpd.png'},
+	{id: 'clair', name: 'Clair', image: 'https://i.imgur.com/MqWmTmj.png'},
+	{id: 'janine', name: 'Janine', image: 'https://i.imgur.com/S44w2rK.png'},
+	{id: 'jasmine', name: 'Jasmine', image: 'https://i.imgur.com/WHIClBP.png'},
+	{id: 'karen', name: 'Karen', image: 'https://i.imgur.com/wkFK8pc.png'},
+	{id: 'lyra', name: 'Lyra', image: 'https://i.imgur.com/BUANOBD.png'},
+	{id: 'whitney', name: 'Whitney', image: 'https://i.imgur.com/rik8Kk5.png'},
+	{id: 'jessie', name: 'Jessie', image: 'https://i.imgur.com/3uGrCFr.png'},
+	{id: 'elaine', name: 'Elaine', image: 'https://i.imgur.com/WxbLBqb.png'},
+	{id: 'green', name: 'Green', image: 'https://i.imgur.com/cVyfz01.png'},
+	{id: 'melody', name: 'Melody', image: 'https://i.imgur.com/QYTUMkW.png'},
+	{id: 'nursejoy', name: 'Nurse Joy', image: 'https://i.imgur.com/ReVpfXS.png'},
+	{id: 'officerjenny', name: 'Officer Jenny', image: 'https://i.imgur.com/w8BX7qv.png'},
+	{id: 'courtney', name: 'Courtney', image: 'https://i.imgur.com/Gupuy6f.png'},
+	{id: 'lisia', name: 'Lisia', image: 'https://i.imgur.com/hiFE907.png'},
+	{id: 'liza', name: 'Liza', image: 'https://i.imgur.com/VPMkSOK.png'},
+	{id: 'shelly', name: 'Shelly', image: 'https://i.imgur.com/7c8VaNM.png'},
+	{id: 'zinnia', name: 'Zinnia', image: 'https://i.imgur.com/aO3c5xq.png'},
+	{id: 'risa', name: 'Risa', image: 'https://i.imgur.com/b5rlH0e.png'},
+	{id: 'flannery', name: 'Flannery', image: 'https://i.imgur.com/1SyRb0S.png'},
+	{id: 'may', name: 'May', image: 'https://i.imgur.com/pTvF7Xa.png'},
+	{id: 'lillie', name: 'Lillie', image: 'https://i.imgur.com/XViELP3.png'},
+	{id: 'lusamine', name: 'Lusamine', image: 'https://i.imgur.com/5DFzSeH.png'},
+	{id: 'mallow', name: 'Mallow', image: 'https://i.imgur.com/cZE7DEz.png'},
+	{id: 'plumeria', name: 'Plumeria', image: 'https://i.imgur.com/BuIbaSd.png'},
+	{id: 'selene', name: 'Selene', image: 'https://i.imgur.com/F40MBSH.png'},
+	{id: 'wicke', name: 'Wicke', image: 'https://i.imgur.com/M4p5V5S.png'},
+	{id: 'bea', name: 'Bea', image: 'https://i.imgur.com/SLcoNbY.png'},
+	{id: 'gloria', name: 'Gloria', image: 'https://i.imgur.com/3RLNlRf.png'},
+	{id: 'klara', name: 'Klara', image: 'https://i.imgur.com/DvQpMX5.png'},
+	{id: 'marnie', name: 'Marnie', image: 'https://i.imgur.com/UmxqYjB.png'},
+	{id: 'melony', name: 'Melony', image: 'https://i.imgur.com/gay8I7S.png'},
+	{id: 'nessa', name: 'Nessa', image: 'https://i.imgur.com/wsrbAmA.png'},
+	{id: 'oleana', name: 'Oleana', image: 'https://i.imgur.com/jZNPumK.png'},
+	{id: 'soliera', name: 'Soliera', image: 'https://i.imgur.com/3U4S9RS.png'},
+	{id: 'sonia', name: 'Sonia', image: 'https://i.imgur.com/xSfXTmJ.png'},
+	{id: 'hexmaniac', name: 'Hex Maniac', image: 'https://i.imgur.com/wy15NYm.png'},
+	{id: 'korrina', name: 'Korrina', image: 'https://i.imgur.com/amuOWaz.png'},
+	{id: 'serena', name: 'Serena', image: 'https://i.imgur.com/QIBmG0L.png'},
+	{id: 'valerie', name: 'Valerie', image: 'https://i.imgur.com/kzk22sq.png'},
+];
+
+var myPicker = new picker.Picker({
+    items: items
+});
+
+var pickerUI = new PickerUI(myPicker, {
+    elements: {
+        pick: "#pick",
+        pass: "#pass",
+        undo: "#undo",
+        redo: "#redo",
+        evaluating: "#evaluating",
+        favorites: "#favorites"
+    }
+});
+
+pickerUI.initialize();
+
+/* Sortable favorites - you can safely remove this, and the Sortable.min.js script, if you don't want to be able to sort your favorite list. */
+var sortable = new Sortable(pickerUI.elem.favorites.get(0), {
+    draggable: '.item',
+    animation: 100,
+    onStart: function() {
+        pickerUI.elem.favorites.addClass("sorting");
+    },
+    onEnd: function() {
+        pickerUI.elem.favorites.removeClass("sorting");
+    },
+    onUpdate: function() {
+        myPicker.setFavorites(pickerUI.elem.favorites.children().map(function() {
+            return pickerUI.getItem(this);
+        }).get());
+        pickerUI.update(true);
+    }
+});
+/* End sortable favorites */
+</script>
+</body>
+</html>
